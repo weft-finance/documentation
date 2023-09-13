@@ -1,7 +1,18 @@
 openapi: 3.0.0
 servers:
-  - url: http://api.goweft.com
+  - url: https://api.goweft.com
     description: Production server
+  - url: http://localhost:3000
+    description: Local server
+tags:
+  - name: auth
+    description: |
+      The auth tag is used for endpoints related to authentication and authorization.
+
+  - name: events
+    description: |
+      The events tag is used for endpoints related to event ingestion.
+
 info:
   title: Weft Event Ingestion API
   version: 2.3.1
@@ -14,8 +25,31 @@ info:
 
     The API is secured using the Bearer Authentication scheme with JWT tokens. To obtain a JWT token, please contact Weft at team@goweft.com
 paths:
+  /refreshToken:
+    post:
+      tags:
+        - events
+      operationId: refreshUser
+      summary: Refreshes the user's access token
+      description: |
+        This endpoint is designed to refresh an expired or expiring JWT access token.
+        Submit the refresh token in the request body to obtain a new access token.
+        Use this new token for subsequent API calls.
+        Token is set to expire every hour.
+      requestBody:
+        description: The body contains the refresh token required to obtain a new access token.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RefreshTokenInput'
+      responses:
+        '200':
+          $ref: '#/components/responses/RefreshToken'
   /events:
     put:
+      tags:
+        - events
       operationId: sendEvents
       summary: Submit a batch of events for ingestion
       description: Use this endpoint to send an array of events for processing and storage. Make sure to comply with the request schema for each event.
@@ -65,6 +99,23 @@ components:
         - timestamp
         - customerAlias
 
+    RefreshTokenInput:
+      type: object
+      properties:
+        refreshToken:
+          type: string
+          description: The refresh token issued previously during the authentication process. It is required to obtain a new access token.
+      required:
+        - refreshToken
+
+    RefreshTokenResponse:
+      type: object
+      properties:
+        token:
+          type: string
+      required:
+        - token
+
   requestBodies:
     Events:
       required: true
@@ -83,7 +134,15 @@ components:
                   key1: "api_processing_in_milliseconds"
                   key2: "api_url"
                 ref: "4f6cf35x-2c4y-483z-a0a9-158621f77a21"
-  
+
+  responses:
+    RefreshToken:
+      description: response contains a new access token
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/RefreshTokenResponse'
+
   securitySchemes:
     BearerAuth:
       type: http
