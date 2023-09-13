@@ -1,4 +1,7 @@
 openapi: 3.0.0
+servers:
+  - url: http://api.goweft.com
+    description: Production server
 info:
   title: Weft Event Ingestion API
   version: 2.3.1
