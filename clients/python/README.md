@@ -43,8 +43,7 @@ Here's an example:
 from openapi_client.models import EventInput
 
 events = [
-    EventInput(name='event1', data={'key1': 'value1'}),
-    EventInput(name='event2', data={'key2': 'value2'})
+    EventInput(timestamp='2015-01-01T00:00:00.000Z' name='api_call_sent', data={'processingTimeInMilliseconds': 821, 'url': 'https://google.com'}),
 ]
 
 client.send_events(events)
