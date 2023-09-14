@@ -119,7 +119,9 @@ components:
   requestBodies:
     Events:
       required: true
-      description: An array of events following the EventInput schema. This request body should be included in the PUT request to '/events'.
+      description: | 
+        An array of events following the EventInput schema. This request body should be included in the PUT request to '/events'
+        Up to 1000 events or a total payload max size of 256KB
       content:
         application/json:
           schema:
