@@ -5,10 +5,8 @@ This is a Python SDK for interacting with Weft. It wraps the OpenAPI client and 
 
 ## Installation
 
-First, install the required dependencies:
-
 ```bash
-pip install openapi_client
+pip install weft-client
 ```
 
 ## Importing the Client
