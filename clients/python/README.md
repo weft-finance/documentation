@@ -1,8 +1,11 @@
 ```markdown
 # WeftClient Python SDK
 
-This is a Python SDK for interacting with Weft. It wraps the OpenAPI client and provides a more convenient way to work with Weft's APIs. Below you will find a guide on how to use this client.
-
+**
+This is a Python SDK for interacting with Weft.
+It wraps the OpenAPI client and provides a more convenient way to work with Weft's APIs.
+Below you will find a guide on how to use this client.
+**
 ## Installation
 
 First, install the required dependencies:
