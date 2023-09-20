@@ -13,7 +13,7 @@
 from setuptools import setup, find_packages  # noqa: H301
 
 NAME = "weft-client"
-VERSION = "1.1.4"
+VERSION = "1.2.4"
 # To install the library, run the following
 #
 # python setup.py install

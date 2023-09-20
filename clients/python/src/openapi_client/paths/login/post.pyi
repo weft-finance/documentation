@@ -25,64 +25,75 @@ import frozendict  # noqa: F401
 
 from openapi_client import schemas  # noqa: F401
 
-from openapi_client.model.event_input import EventInput
+from openapi_client.model.login_request_schema import LoginRequestSchema
+from openapi_client.model.login_response_schema import LoginResponseSchema
 
 # body param
+SchemaForRequestBodyApplicationJson = LoginRequestSchema
 
 
-class SchemaForRequestBodyApplicationJson(
-    schemas.ListSchema
-):
-
-
-    class MetaOapg:
-        
-        @staticmethod
-        def items() -> typing.Type['EventInput']:
-            return EventInput
-
-    def __new__(
-        cls,
-        _arg: typing.Union[typing.Tuple['EventInput'], typing.List['EventInput']],
-        _configuration: typing.Optional[schemas.Configuration] = None,
-    ) -> 'SchemaForRequestBodyApplicationJson':
-        return super().__new__(
-            cls,
-            _arg,
-            _configuration=_configuration,
-        )
-
-    def __getitem__(self, i: int) -> 'EventInput':
-        return super().__getitem__(i)
-
-
-request_body_event_input = api_client.RequestBody(
+request_body_login_request_schema = api_client.RequestBody(
     content={
         'application/json': api_client.MediaType(
             schema=SchemaForRequestBodyApplicationJson),
     },
     required=True,
 )
+SchemaFor200ResponseBodyApplicationJson = LoginResponseSchema
 
 
 @dataclass
 class ApiResponseFor200(api_client.ApiResponse):
     response: urllib3.HTTPResponse
-    body: schemas.Unset = schemas.unset
+    body: typing.Union[
+        SchemaFor200ResponseBodyApplicationJson,
+    ]
     headers: schemas.Unset = schemas.unset
 
 
 _response_for_200 = api_client.OpenApiResponse(
     response_cls=ApiResponseFor200,
+    content={
+        'application/json': api_client.MediaType(
+            schema=SchemaFor200ResponseBodyApplicationJson),
+    },
+)
+
+
+@dataclass
+class ApiResponseFor400(api_client.ApiResponse):
+    response: urllib3.HTTPResponse
+    body: schemas.Unset = schemas.unset
+    headers: schemas.Unset = schemas.unset
+
+
+_response_for_400 = api_client.OpenApiResponse(
+    response_cls=ApiResponseFor400,
+)
+
+
+@dataclass
+class ApiResponseFor500(api_client.ApiResponse):
+    response: urllib3.HTTPResponse
+    body: schemas.Unset = schemas.unset
+    headers: schemas.Unset = schemas.unset
+
+
+_response_for_500 = api_client.OpenApiResponse(
+    response_cls=ApiResponseFor500,
+)
+_all_accept_content_types = (
+    'application/json',
 )
 
 
 class BaseApi(api_client.Api):
     @typing.overload
-    def _send_events_oapg(
+    def _login_oapg(
         self,
-        body: typing.Union[SchemaForRequestBodyApplicationJson,list, tuple, ],
+        body: typing.Union[SchemaForRequestBodyApplicationJson,],
         content_type: typing_extensions.Literal["application/json"] = ...,
+        accept_content_types: typing.Tuple[str] = _all_accept_content_types,
         stream: bool = False,
         timeout: typing.Optional[typing.Union[int, typing.Tuple]] = None,
         skip_deserialization: typing_extensions.Literal[False] = ...,
@@ -91,10 +102,11 @@ class BaseApi(api_client.Api):
     ]: ...
 
     @typing.overload
-    def _send_events_oapg(
+    def _login_oapg(
         self,
-        body: typing.Union[SchemaForRequestBodyApplicationJson,list, tuple, ],
+        body: typing.Union[SchemaForRequestBodyApplicationJson,],
         content_type: str = ...,
+        accept_content_types: typing.Tuple[str] = _all_accept_content_types,
         stream: bool = False,
         timeout: typing.Optional[typing.Union[int, typing.Tuple]] = None,
         skip_deserialization: typing_extensions.Literal[False] = ...,
@@ -104,20 +116,22 @@ class BaseApi(api_client.Api):
 
 
     @typing.overload
-    def _send_events_oapg(
+    def _login_oapg(
         self,
-        body: typing.Union[SchemaForRequestBodyApplicationJson,list, tuple, ],
+        body: typing.Union[SchemaForRequestBodyApplicationJson,],
         skip_deserialization: typing_extensions.Literal[True],
         content_type: str = ...,
+        accept_content_types: typing.Tuple[str] = _all_accept_content_types,
         stream: bool = False,
         timeout: typing.Optional[typing.Union[int, typing.Tuple]] = None,
     ) -> api_client.ApiResponseWithoutDeserialization: ...
 
     @typing.overload
-    def _send_events_oapg(
+    def _login_oapg(
         self,
-        body: typing.Union[SchemaForRequestBodyApplicationJson,list, tuple, ],
+        body: typing.Union[SchemaForRequestBodyApplicationJson,],
         content_type: str = ...,
+        accept_content_types: typing.Tuple[str] = _all_accept_content_types,
         stream: bool = False,
         timeout: typing.Optional[typing.Union[int, typing.Tuple]] = None,
         skip_deserialization: bool = ...,
@@ -126,16 +140,17 @@ class BaseApi(api_client.Api):
         api_client.ApiResponseWithoutDeserialization,
     ]: ...
 
-    def _send_events_oapg(
+    def _login_oapg(
         self,
-        body: typing.Union[SchemaForRequestBodyApplicationJson,list, tuple, ],
+        body: typing.Union[SchemaForRequestBodyApplicationJson,],
         content_type: str = 'application/json',
+        accept_content_types: typing.Tuple[str] = _all_accept_content_types,
         stream: bool = False,
         timeout: typing.Optional[typing.Union[int, typing.Tuple]] = None,
         skip_deserialization: bool = False,
     ):
         """
-        Submit a batch of events for ingestion
+        Login by obtaining a new access token
         :param skip_deserialization: If true then api_response.response will be set but
             api_response.body and api_response.headers will not be deserialized into schema
             class instances
@@ -144,13 +159,16 @@ class BaseApi(api_client.Api):
 
         _headers = HTTPHeaderDict()
         # TODO add cookie handling
+        if accept_content_types:
+            for accept_content_type in accept_content_types:
+                _headers.add('Accept', accept_content_type)
 
         if body is schemas.unset:
             raise exceptions.ApiValueError(
                 'The required body parameter has an invalid value of: unset. Set a valid value instead')
         _fields = None
         _body = None
-        serialized_data = request_body_event_input.serialize(body, content_type)
+        serialized_data = request_body_login_request_schema.serialize(body, content_type)
         _headers.add('Content-Type', content_type)
         if 'fields' in serialized_data:
             _fields = serialized_data['fields']
@@ -158,11 +176,10 @@ class BaseApi(api_client.Api):
             _body = serialized_data['body']
         response = self.api_client.call_api(
             resource_path=used_path,
-            method='put'.upper(),
+            method='post'.upper(),
             headers=_headers,
             fields=_fields,
             body=_body,
-            auth_settings=_auth,
             stream=stream,
             timeout=timeout,
         )
@@ -186,14 +203,15 @@ class BaseApi(api_client.Api):
         return api_response
 
 
-class SendEvents(BaseApi):
+class Login(BaseApi):
     # this class is used by api classes that refer to endpoints with operationId fn names
 
     @typing.overload
-    def send_events(
+    def login(
         self,
-        body: typing.Union[SchemaForRequestBodyApplicationJson,list, tuple, ],
+        body: typing.Union[SchemaForRequestBodyApplicationJson,],
         content_type: typing_extensions.Literal["application/json"] = ...,
+        accept_content_types: typing.Tuple[str] = _all_accept_content_types,
         stream: bool = False,
         timeout: typing.Optional[typing.Union[int, typing.Tuple]] = None,
         skip_deserialization: typing_extensions.Literal[False] = ...,
@@ -202,10 +220,11 @@ class SendEvents(BaseApi):
     ]: ...
 
     @typing.overload
-    def send_events(
+    def login(
         self,
-        body: typing.Union[SchemaForRequestBodyApplicationJson,list, tuple, ],
+        body: typing.Union[SchemaForRequestBodyApplicationJson,],
         content_type: str = ...,
+        accept_content_types: typing.Tuple[str] = _all_accept_content_types,
         stream: bool = False,
         timeout: typing.Optional[typing.Union[int, typing.Tuple]] = None,
         skip_deserialization: typing_extensions.Literal[False] = ...,
@@ -215,20 +234,22 @@ class SendEvents(BaseApi):
 
 
     @typing.overload
-    def send_events(
+    def login(
         self,
-        body: typing.Union[SchemaForRequestBodyApplicationJson,list, tuple, ],
+        body: typing.Union[SchemaForRequestBodyApplicationJson,],
         skip_deserialization: typing_extensions.Literal[True],
         content_type: str = ...,
+        accept_content_types: typing.Tuple[str] = _all_accept_content_types,
         stream: bool = False,
         timeout: typing.Optional[typing.Union[int, typing.Tuple]] = None,
     ) -> api_client.ApiResponseWithoutDeserialization: ...
 
     @typing.overload
-    def send_events(
+    def login(
         self,
-        body: typing.Union[SchemaForRequestBodyApplicationJson,list, tuple, ],
+        body: typing.Union[SchemaForRequestBodyApplicationJson,],
         content_type: str = ...,
+        accept_content_types: typing.Tuple[str] = _all_accept_content_types,
         stream: bool = False,
         timeout: typing.Optional[typing.Union[int, typing.Tuple]] = None,
         skip_deserialization: bool = ...,
@@ -237,31 +258,34 @@ class SendEvents(BaseApi):
         api_client.ApiResponseWithoutDeserialization,
     ]: ...
 
-    def send_events(
+    def login(
         self,
-        body: typing.Union[SchemaForRequestBodyApplicationJson,list, tuple, ],
+        body: typing.Union[SchemaForRequestBodyApplicationJson,],
         content_type: str = 'application/json',
+        accept_content_types: typing.Tuple[str] = _all_accept_content_types,
         stream: bool = False,
         timeout: typing.Optional[typing.Union[int, typing.Tuple]] = None,
         skip_deserialization: bool = False,
     ):
-        return self._send_events_oapg(
+        return self._login_oapg(
             body=body,
             content_type=content_type,
+            accept_content_types=accept_content_types,
             stream=stream,
             timeout=timeout,
             skip_deserialization=skip_deserialization
         )
 
 
-class ApiForput(BaseApi):
+class ApiForpost(BaseApi):
     # this class is used by api classes that refer to endpoints by path and http method names
 
     @typing.overload
-    def put(
+    def post(
         self,
-        body: typing.Union[SchemaForRequestBodyApplicationJson,list, tuple, ],
+        body: typing.Union[SchemaForRequestBodyApplicationJson,],
         content_type: typing_extensions.Literal["application/json"] = ...,
+        accept_content_types: typing.Tuple[str] = _all_accept_content_types,
         stream: bool = False,
         timeout: typing.Optional[typing.Union[int, typing.Tuple]] = None,
         skip_deserialization: typing_extensions.Literal[False] = ...,
@@ -270,10 +294,11 @@ class ApiForput(BaseApi):
     ]: ...
 
     @typing.overload
-    def put(
+    def post(
         self,
-        body: typing.Union[SchemaForRequestBodyApplicationJson,list, tuple, ],
+        body: typing.Union[SchemaForRequestBodyApplicationJson,],
         content_type: str = ...,
+        accept_content_types: typing.Tuple[str] = _all_accept_content_types,
         stream: bool = False,
         timeout: typing.Optional[typing.Union[int, typing.Tuple]] = None,
         skip_deserialization: typing_extensions.Literal[False] = ...,
@@ -283,20 +308,22 @@ class ApiForput(BaseApi):
 
 
     @typing.overload
-    def put(
+    def post(
         self,
-        body: typing.Union[SchemaForRequestBodyApplicationJson,list, tuple, ],
+        body: typing.Union[SchemaForRequestBodyApplicationJson,],
         skip_deserialization: typing_extensions.Literal[True],
         content_type: str = ...,
+        accept_content_types: typing.Tuple[str] = _all_accept_content_types,
         stream: bool = False,
         timeout: typing.Optional[typing.Union[int, typing.Tuple]] = None,
     ) -> api_client.ApiResponseWithoutDeserialization: ...
 
     @typing.overload
-    def put(
+    def post(
         self,
-        body: typing.Union[SchemaForRequestBodyApplicationJson,list, tuple, ],
+        body: typing.Union[SchemaForRequestBodyApplicationJson,],
         content_type: str = ...,
+        accept_content_types: typing.Tuple[str] = _all_accept_content_types,
         stream: bool = False,
         timeout: typing.Optional[typing.Union[int, typing.Tuple]] = None,
         skip_deserialization: bool = ...,
@@ -305,17 +332,19 @@ class ApiForput(BaseApi):
         api_client.ApiResponseWithoutDeserialization,
     ]: ...
 
-    def put(
+    def post(
         self,
-        body: typing.Union[SchemaForRequestBodyApplicationJson,list, tuple, ],
+        body: typing.Union[SchemaForRequestBodyApplicationJson,],
         content_type: str = 'application/json',
+        accept_content_types: typing.Tuple[str] = _all_accept_content_types,
         stream: bool = False,
         timeout: typing.Optional[typing.Union[int, typing.Tuple]] = None,
         skip_deserialization: bool = False,
     ):
-        return self._send_events_oapg(
+        return self._login_oapg(
             body=body,
             content_type=content_type,
+            accept_content_types=accept_content_types,
             stream=stream,
             timeout=timeout,
             skip_deserialization=skip_deserialization

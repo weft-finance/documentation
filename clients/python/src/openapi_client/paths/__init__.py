@@ -6,5 +6,5 @@ import enum
 
 
 class PathValues(str, enum.Enum):
-    REFRESH_TOKEN = "/refreshToken"
+    LOGIN = "/login"
     EVENTS = "/events"

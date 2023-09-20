@@ -12,5 +12,6 @@
 # sys.setrecursionlimit(n)
 
 from openapi_client.model.event_input import EventInput
-from openapi_client.model.refresh_token_input import RefreshTokenInput
-from openapi_client.model.refresh_token_response import RefreshTokenResponse
+from openapi_client.model.login_request_schema import LoginRequestSchema
+from openapi_client.model.login_response_schema import LoginResponseSchema
+from openapi_client.model.send_events_request_schema import SendEventsRequestSchema

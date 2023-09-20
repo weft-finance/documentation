@@ -1,7 +1,7 @@
-from openapi_client.paths.events.put import ApiForput
+from openapi_client.paths.events.post import ApiForpost
 
 
 class Events(
-    ApiForput,
+    ApiForpost,
 ):
     pass

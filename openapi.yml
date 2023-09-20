@@ -1,9 +1,15 @@
 openapi: 3.0.0
-servers:
-  - url: https://api.goweft.com
-    description: Production server
-  - url: http://localhost:3000
-    description: Local server
+info:
+  title: Weft Events Api
+  version: 2.3.1
+  description: |
+    The Weft Event Ingestion API is a RESTful API that allows you to submit events for processing and storage.
+    The API is secured using the Bearer Authentication scheme with JWT tokens.
+    To obtain a JWT token, please contact Weft at team@goweft.com
+x-amazon-apigateway-request-validators:
+  body-validator:
+    validateRequestBody: true
+    validateRequestParameters: false
 tags:
   - name: auth
     description: |
@@ -13,55 +19,97 @@ tags:
     description: |
       The events tag is used for endpoints related to event ingestion.
 
-info:
-  title: Weft Event Ingestion API
-  version: 2.3.1
-  contact:
-    name: Weft Finance, Inc
-    email: team@goweft.com
-    url: https://goweft.com
-  description: |
-    The Weft Event Ingestion API is a RESTful API that allows you to submit events for processing and storage. The API is designed to be used by Weft customers and partners to submit events from their own applications and systems. The API is also used by Weft's own backend infrastructure to ingest events from various sources.
+servers:
+  - url: https://events.goweft.com
+    description: Production server
+  - url: http://localhost:3000
+    description: Local server
 
-    The API is secured using the Bearer Authentication scheme with JWT tokens. To obtain a JWT token, please contact Weft at team@goweft.com
 paths:
-  /refreshToken:
+  /login:
     post:
       tags:
-        - events
-      operationId: refreshUser
-      summary: Refreshes the user's access token
+        - auth
+      operationId: login
+      summary: Login by obtaining a new access token
       description: |
-        This endpoint is designed to refresh an expired or expiring JWT access token.
-        Submit the refresh token in the request body to obtain a new access token.
+        This endpoint is designed to acquire a temporary access token.
+        Submit the auth token in the request body to obtain a new access token.
         Use this new token for subsequent API calls.
         Token is set to expire every hour.
+      x-amazon-apigateway-request-validator: body-validator
       requestBody:
-        description: The body contains the refresh token required to obtain a new access token.
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/RefreshTokenInput'
+        $ref: '#/components/requestBodies/LoginRequest'
       responses:
         '200':
-          $ref: '#/components/responses/RefreshToken'
+          $ref: '#/components/responses/LoginResponse'
+        '400':
+          description: Bad Request
+        '500':
+          description: Internal Server Error
+      x-amazon-apigateway-integration:
+        type: aws_proxy
+        httpMethod: POST
+        uri:
+          Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:eu-central-1:${AWS::AccountId}:function:${Environment}-server-login/invocations
+
   /events:
-    put:
+    post:
+      operationId: sendEvents
+      security:
+        - CognitoServerAuthorizer: []
       tags:
         - events
-      operationId: sendEvents
       summary: Submit a batch of events for ingestion
       description: Use this endpoint to send an array of events for processing and storage. Make sure to comply with the request schema for each event.
       requestBody:
-        $ref: '#/components/requestBodies/Events'
-      security:
-        - BearerAuth: []
+        $ref: '#/components/requestBodies/SendEventsRequest'
       responses:
         '200':
           description: OK
+        '400':
+          description: Bad Request
+        '401':
+          description: Unauthorized
+        '500':
+          description: Internal Server Error
+      x-amazon-apigateway-request-validator: body-validator
+      x-amazon-apigateway-integration:
+        uri: 
+          Fn::Sub: 'arn:aws:apigateway:${AWS::Region}:sqs:path/${AWS::AccountId}/${Environment}-events-writer-queue'
+        credentials: 
+          Fn::GetAtt: ApiGwToSQSRole.Arn
+        httpMethod: 'POST'
+        responses:
+          default:
+            statusCode: '200'
+        requestParameters:
+          integration.request.header.Content-Type: "'application/x-www-form-urlencoded'"
+        passthroughBehavior: NEVER
+        requestTemplates:
+          application/json: "Action=SendMessage&MessageBody=$input.body&MessageAttribute.1.Name=AuthorizationToken&MessageAttribute.1.Value.StringValue=$input.params('Authorization').replace(\"Bearer \", \"\")&MessageAttribute.1.Value.DataType=String"
+        type: 'aws'
 
 components:
+  requestBodies:
+    LoginRequest:
+      required: true
+      description: The body contains the refresh token required to obtain a new access token.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/LoginRequestSchema'
+
+    SendEventsRequest:
+      required: true
+      description: | 
+        An array of events following the EventInput schema. This request body should be included in the PUT request to '/events'
+        Up to 1000 events or a total payload max size of 256KB
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/SendEventsRequestSchema'
+            
   schemas:
     EventInput:
       type: object
@@ -99,7 +147,7 @@ components:
         - timestamp
         - customerAlias
 
-    RefreshTokenInput:
+    LoginRequestSchema:
       type: object
       properties:
         refreshToken:
@@ -108,46 +156,38 @@ components:
       required:
         - refreshToken
 
-    RefreshTokenResponse:
+
+    LoginResponseSchema:
       type: object
       properties:
         token:
           type: string
+          description: The new access token
       required:
         - token
 
-  requestBodies:
-    Events:
-      required: true
-      description: | 
-        An array of events following the EventInput schema. This request body should be included in the PUT request to '/events'
-        Up to 1000 events or a total payload max size of 256KB
-      content:
-        application/json:
-          schema:
-            type: array
-            items:
-              $ref: '#/components/schemas/EventInput'
-            example:
-              - name: "UserSignup"
-                timestamp: "2023-09-13T18:25:43.511Z"
-                customerAlias: "customer_12345"
-                data:
-                  key1: "api_processing_in_milliseconds"
-                  key2: "api_url"
-                ref: "4f6cf35x-2c4y-483z-a0a9-158621f77a21"
+    SendEventsRequestSchema:
+      type: object
+      properties:
+        events:
+          type: array
+          items:
+            $ref: '#/components/schemas/EventInput'
+          example:
+            - name: "UserSignup"
+              timestamp: "2023-09-13T18:25:43.511Z"
+              customerAlias: "customer_12345"
+              data:
+                key1: "api_processing_in_milliseconds"
+                key2: "api_url"
+              ref: "4f6cf35x-2c4y-483z-a0a9-158621f77a21"
+      required:
+        - events
 
   responses:
-    RefreshToken:
+    LoginResponse:
       description: response contains a new access token
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/RefreshTokenResponse'
-
-  securitySchemes:
-    BearerAuth:
-      type: http
-      scheme: bearer
-      description: This API uses the Bearer Authentication scheme with JWT tokens.
-      bearerFormat: JWT
+            $ref: '#/components/schemas/LoginResponseSchema'
