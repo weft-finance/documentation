@@ -98,7 +98,7 @@ components:
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/LoginRequestSchema'
+            $ref: '#/components/schemas/LoginRequest'
 
     SendEventsRequest:
       required: true
@@ -108,7 +108,7 @@ components:
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/SendEventsRequestSchema'
+            $ref: '#/components/schemas/SendEventsRequest'
             
   schemas:
     EventInput:
@@ -147,7 +147,7 @@ components:
         - timestamp
         - customerAlias
 
-    LoginRequestSchema:
+    LoginRequest:
       type: object
       properties:
         refreshToken:
@@ -157,7 +157,7 @@ components:
         - refreshToken
 
 
-    LoginResponseSchema:
+    LoginResponse:
       type: object
       properties:
         token:
@@ -166,13 +166,15 @@ components:
       required:
         - token
 
-    SendEventsRequestSchema:
+    SendEventsRequest:
       type: object
       properties:
         events:
           type: array
           items:
             $ref: '#/components/schemas/EventInput'
+          minItems: 1
+          maxItems: 1000
           example:
             - name: "UserSignup"
               timestamp: "2023-09-13T18:25:43.511Z"
@@ -190,4 +192,4 @@ components:
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/LoginResponseSchema'
+            $ref: '#/components/schemas/LoginResponse'
