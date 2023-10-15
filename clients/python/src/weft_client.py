@@ -1,9 +1,10 @@
-from typing import List, Optional
+from typing import List
 from openapi_client.configuration import Configuration
 from openapi_client.api_client import ApiClient
-from openapi_client.models import EventInput, LoginRequestSchema
-from openapi_client.apis.tags import events_api, auth_api
-from openapi_client.model.send_events_request_schema import SendEventsRequestSchema
+from openapi_client.models import EventInput
+from openapi_client.api import auth_api, events_api
+from openapi_client.models.login_request import LoginRequest
+from openapi_client.models.send_events_request import SendEventsRequest
 
 class WeftClient:
     def __init__(self, host: str):
@@ -39,11 +40,11 @@ class WeftClient:
         
 
         auth_api = self.__build_auth_api()
-        refresh_token_input = LoginRequestSchema(refreshToken=access_key_id)
+        refresh_token_input = LoginRequest(refreshToken=access_key_id)
 
         refresh_response = auth_api.login(refresh_token_input)
 
-        self.__access_token = refresh_response.body.get('token')        
+        self.__access_token = refresh_response.token
     
     def send_events(self, events: List[EventInput]):
         """
@@ -54,6 +55,6 @@ class WeftClient:
         """
 
         events_api = self.__build_events_api(self.__host)
-        send_events_request = SendEventsRequestSchema(events=events)
+        send_events_request = SendEventsRequest(events=events)
 
         return events_api.send_events(send_events_request)

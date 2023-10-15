@@ -9,6 +9,7 @@ frozendict = "~=2.3.4"
 python-dateutil = "~=2.7.0"
 typing-extensions = "~=4.3.0"
 urllib3 = "~=1.26.7"
+pydantic = ">=1.10.5,<2"
 
 [dev-packages]
 setuptools = "*"
